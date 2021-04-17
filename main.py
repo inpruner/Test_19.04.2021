@@ -1,14 +1,16 @@
+from sqlalchemy import create_engine
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text
 from sqlalchemy.orm import declarative_base
+from sqlalchemy.orm import sessionmaker
 
 
 class Unit:
     all_units = {}
 
-    def __init__(self, name=None, load_max=None):
+    def __init__(self, name=None):
         self.name = name
-        self.__load_max = load_max
+        self.__load_max = 0
         self.streams_in = dict()
         self.streams_out = dict()
         Unit.all_units[self.name] = self
@@ -83,3 +85,22 @@ class __LoadMaxTable(__Base):
 
     def __repr__(self):
         return f"<LoadMax(unit_id={self.unit_id}, value={self.value})>"
+
+
+def get_units(session, verbose=False):
+    query = session.query(__UnitTable.name)
+    for instance in query:
+        new_unit = Unit(instance.name)
+        if verbose:
+            print(new_unit)
+
+
+def main(dialect='sqlite:///', path='db.db'):
+    engine = create_engine(''.join([dialect, path]), echo=False)
+    Session = sessionmaker(bind=engine)
+    with Session() as session:
+        get_units(session, verbose=True)
+
+
+if __name__ == '__main__':
+    main()
