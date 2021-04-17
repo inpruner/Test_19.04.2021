@@ -15,6 +15,9 @@ class Unit:
         self.streams_out = dict()
         Unit.all_units[self.name] = self
 
+    def update_load_max(self, value=0):
+        self.__load_max = value
+
     def __repr__(self):
         return f"<Unit(name={self.name}," \
                f" __load_max={self.__load_max}," \
