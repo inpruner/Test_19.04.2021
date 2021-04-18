@@ -91,6 +91,7 @@ class __LoadMaxTable(__Base):
 
 
 def get_units(session, verbose=False):
+    new_unit = None
     query = session.query(__UnitTable.name, __UnitTable.type)
     for instance in query:
         if instance.type == 0:
@@ -113,12 +114,21 @@ def set_load_max(session, verbose=False):
             print(unit)
 
 
+def get_streams(session, verbose=False):
+    query = session.query(__StreamTable.name)
+    for instance in query:
+        new_stream = Stream(instance.name)
+        if verbose:
+            print(new_stream)
+
+
 def main(dialect='sqlite:///', path='db.db'):
     engine = create_engine(''.join([dialect, path]), echo=False)
     Session = sessionmaker(bind=engine)
     with Session() as session:
-        get_units(session, verbose=True)
-        #set_load_max(session, verbose=True)
+        get_units(session)
+        set_load_max(session, verbose=True)
+        get_streams(session, verbose=True)
 
 
 if __name__ == '__main__':
