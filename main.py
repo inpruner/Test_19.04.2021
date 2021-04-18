@@ -122,13 +122,34 @@ def get_streams(session, verbose=False):
             print(new_stream)
 
 
+def set_related_units(session, verbose=False):
+    for stream in Stream.all_streams.values():
+        query = session.query(__StreamTable.name.label('stream_name'),
+                              __UnitTable.name.label('unit_name'),
+                              __UnitMaterialTable.feed_flag)
+        query = query.join(__UnitMaterialTable,
+                           __UnitMaterialTable.stream_id == __StreamTable.id)
+        query = query.join(__UnitTable,
+                           __UnitTable.id == __UnitMaterialTable.unit_id )
+        query = query.filter(__StreamTable.name == stream.name)
+        query = query.order_by('unit_name')
+        for instance in query:
+            if instance.feed_flag:
+                stream.dst_units.append(instance.unit_name)
+            else:
+                stream.dep_units.append(instance.unit_name)
+        if verbose:
+            print(stream)
+
+
 def main(dialect='sqlite:///', path='db.db'):
     engine = create_engine(''.join([dialect, path]), echo=False)
     Session = sessionmaker(bind=engine)
     with Session() as session:
         get_units(session)
-        set_load_max(session, verbose=True)
-        get_streams(session, verbose=True)
+        set_load_max(session)
+        get_streams(session)
+        set_related_units(session, verbose=True)
 
 
 if __name__ == '__main__':
