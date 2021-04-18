@@ -15,18 +15,18 @@ class Unit:
         self.streams_out = dict()
         Unit.all_units[self.name] = self
 
-    def update_load_max(self, value=0):
+    def set_load_max(self, value=0):
         self.__load_max = value
 
     def __repr__(self):
-        return f"<Unit(name={self.name}," \
+        return f"<{self.__class__.__name__}(name={self.name}," \
                f" __load_max={self.__load_max}," \
                f" streams_in={self.streams_in}," \
                f" streams_out={self.streams_out})>"
 
 
 class AVTUnit(Unit):
-    pass  # types?
+    pass
 
 
 class RerunningUnit(Unit):
@@ -91,11 +91,26 @@ class __LoadMaxTable(__Base):
 
 
 def get_units(session, verbose=False):
-    query = session.query(__UnitTable.name)
+    query = session.query(__UnitTable.name, __UnitTable.type)
     for instance in query:
-        new_unit = Unit(instance.name)
+        if instance.type == 0:
+            new_unit = AVTUnit(instance.name)
+        elif instance.type == 1:
+            new_unit = RerunningUnit(instance.name)
         if verbose:
             print(new_unit)
+
+
+def set_load_max(session, verbose=False):
+    query = session.query(__UnitTable.name, __LoadMaxTable.value)
+    query = query.join(__LoadMaxTable,
+                       __UnitTable.id == __LoadMaxTable.unit_id)
+    for unit in Unit.all_units.values():
+        load_max_value = query.filter(__UnitTable.name == unit.name).\
+                                      first().value
+        unit.set_load_max(load_max_value)
+        if verbose:
+            print(unit)
 
 
 def main(dialect='sqlite:///', path='db.db'):
@@ -103,6 +118,7 @@ def main(dialect='sqlite:///', path='db.db'):
     Session = sessionmaker(bind=engine)
     with Session() as session:
         get_units(session, verbose=True)
+        #set_load_max(session, verbose=True)
 
 
 if __name__ == '__main__':
