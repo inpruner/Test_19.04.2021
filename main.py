@@ -114,6 +114,17 @@ def set_load_max(session, verbose=False):
             print(unit)
 
 
+def set_related_streams(verbose=False):
+    for stream in Stream.all_streams.values():
+        for unit in stream.dep_units:
+            Unit.all_units[unit].streams_out[stream.name] = stream
+        for unit in stream.dst_units:
+            Unit.all_units[unit].streams_in[stream.name] = stream
+    if verbose:
+        for unit in Unit.all_units.values():
+            print(unit)
+
+
 def get_streams(session, verbose=False):
     query = session.query(__StreamTable.name)
     for instance in query:
@@ -149,8 +160,8 @@ def main(dialect='sqlite:///', path='db.db'):
         get_units(session)
         set_load_max(session)
         get_streams(session)
-        set_related_units(session, verbose=True)
-
+        set_related_units(session)
+        set_related_streams(verbose=True)
 
 if __name__ == '__main__':
     main()
