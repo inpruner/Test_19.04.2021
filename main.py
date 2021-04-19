@@ -6,6 +6,7 @@ from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
 import csv
 import os
+import json
 
 
 class Unit:
@@ -144,7 +145,7 @@ def set_related_units(session, verbose=False):
         query = query.join(__UnitMaterialTable,
                            __UnitMaterialTable.stream_id == __StreamTable.id)
         query = query.join(__UnitTable,
-                           __UnitTable.id == __UnitMaterialTable.unit_id )
+                           __UnitTable.id == __UnitMaterialTable.unit_id)
         query = query.filter(__StreamTable.name == stream.name)
         query = query.order_by('unit_name')
         for instance in query:
@@ -162,7 +163,7 @@ def task_3(session):
     query = query.join(__UnitMaterialTable,
                        __UnitMaterialTable.unit_id == __UnitTable.id)
     query = query.join(__StreamTable,
-                       __StreamTable.id == __UnitMaterialTable.stream_id )
+                       __StreamTable.id == __UnitMaterialTable.stream_id)
     query = query.filter(__UnitMaterialTable.feed_flag == 1)
     query = query.order_by('unit_name')
     print()
@@ -191,7 +192,20 @@ def task_4(session, verbose=False):
 
 
 def task_5(session, verbose=False):
-    pass
+    
+    def write_to_json(data, path=os.getcwd(), file='task_5.json'):
+        with open(''.join([path, '\\', file]), "w") as json_file:
+            json.dump(data, json_file)
+
+    data = {}
+    print()
+    for stream in Stream.all_streams.values():
+        if len(stream.dst_units) > 1:
+            data[stream.name] = stream.dst_units
+            if verbose:
+                print(stream.name, stream.dst_units)
+    write_to_json(data)
+    print('Task 5 - DONE')
 
 
 def task_6(session, verbose=False):
@@ -209,7 +223,7 @@ def main(dialect='sqlite:///', path='db.db'):
         set_related_streams(verbose=True)
         task_3(session)
         task_4(session, verbose=True)
-        # task_5(session)
+        task_5(session, verbose=True)
         # task_6(session)
 
 
