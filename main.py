@@ -1,8 +1,11 @@
 from sqlalchemy import create_engine
 from sqlalchemy import Column
 from sqlalchemy import Integer, Text
+from sqlalchemy import exists
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
+import csv
+import os
 
 
 class Unit:
@@ -153,6 +156,48 @@ def set_related_units(session, verbose=False):
             print(stream)
 
 
+def task_3(session):
+    query = session.query(__UnitTable.name.label('unit_name'),
+                          __StreamTable.name.label('stream_name'))
+    query = query.join(__UnitMaterialTable,
+                       __UnitMaterialTable.unit_id == __UnitTable.id)
+    query = query.join(__StreamTable,
+                       __StreamTable.id == __UnitMaterialTable.stream_id )
+    query = query.filter(__UnitMaterialTable.feed_flag == 1)
+    query = query.order_by('unit_name')
+    print()
+    for instance in query:
+        print(instance.unit_name, instance.stream_name)
+    print('Task 3 - DONE')
+
+
+def task_4(session, verbose=False):
+
+    def write_to_csv(data, path=os.getcwd(), file='task_4.csv'):
+        with open(''.join([path, '\\', file]), "w", newline='') as csv_file:
+            writer = csv.writer(csv_file, delimiter=';')
+            for line in data:
+                writer.writerow(line)
+
+    query = session.query(__StreamTable.id, __StreamTable.name)
+    sub_query = ~exists().where(__UnitMaterialTable.stream_id ==
+                                __StreamTable.id)
+    query = query.filter(sub_query)
+    write_to_csv(query.all())
+    print()
+    if verbose:
+        print(query.all())
+    print('Task 4 - DONE')
+
+
+def task_5(session, verbose=False):
+    pass
+
+
+def task_6(session, verbose=False):
+    pass
+
+
 def main(dialect='sqlite:///', path='db.db'):
     engine = create_engine(''.join([dialect, path]), echo=False)
     Session = sessionmaker(bind=engine)
@@ -162,6 +207,11 @@ def main(dialect='sqlite:///', path='db.db'):
         get_streams(session)
         set_related_units(session)
         set_related_streams(verbose=True)
+        task_3(session)
+        task_4(session, verbose=True)
+        # task_5(session)
+        # task_6(session)
+
 
 if __name__ == '__main__':
     main()
