@@ -11,11 +11,34 @@ import json
 
 
 class Unit:
-    all_units = {}
+    """Создание объекта класса Unit (Установка) с сопутствующими
+     атрибутами.
+
+     Атрибуты класса:
+     all_units -- словарь всех объектов класса Unit. Ключ - имя
+        объекта, значение - ссылка на объект.
+    """
+
+    all_units = dict()
 
     def __init__(self, name=None):
+        """
+        Инициализация класса.
+
+        Атрибуты:
+        name -- строка представляющая имя объекта
+        __load_max -- int представляющий максимальное значение
+            загрузки установки.
+        streams_in -- словарь объектов класса Stream (поток). Ключ - имя
+            объекта, значение - ссылка на объект.
+            Представляет входные потоки.
+        streams_out -- словарь объектов класса Stream (поток). Ключ - имя
+            объекта, значение - ссылка на объект.
+            Представляет выходные потоки.
+        """
+
         self.name = name
-        self.__load_max = 0
+        self.__load_max = 0  # атрибут инкапсулирован согласно заданию.
         self.streams_in = dict()
         self.streams_out = dict()
         Unit.all_units[self.name] = self
@@ -31,17 +54,46 @@ class Unit:
 
 
 class AVTUnit(Unit):
+    """Создание объекта класса AVTUnit.
+
+    Наследует атрибуты и методы класса Unit.
+    """
+
     pass
 
 
 class RerunningUnit(Unit):
+    """Создание объекта класса RerunningUnit.
+
+    Наследует атрибуты и методы класса Unit.
+    """
+
     pass
 
 
 class Stream:
-    all_streams = {}
+    """Создание объекта класса Stream (Поток) с сопутствующими
+     атрибутами.
+
+     Атрибуты класса:
+     all_streams -- словарь всех объектов класса Stream. Ключ - имя
+        объекта, значение - ссылка на объект.
+    """
+
+    all_streams = dict()
 
     def __init__(self, name=None):
+        """
+        Инициализация класса.
+
+        Атрибуты:
+        name -- строка представляющая имя объекта
+        dep_units -- список представляющий имена объектов класса Unit
+            для которых данный поток является выходным.
+        dst_units -- список представляющий имена объектов класса Unit
+            для которых данный поток является входным.
+        """
+
         self.name = name
         self.dep_units = []
         self.dst_units = []
@@ -57,6 +109,16 @@ __Base = declarative_base()
 
 
 class __UnitTable(__Base):
+    """Создание объекта класса __UnitTable  с сопутствующими атрибутами.
+
+    Представляет таблицу Unit производственной БД.
+    Атрибуты:
+    id -- int представляющий идентификатор установки.
+    name -- строка представляющая имя установки.
+    type -- int представляющий тип установки (0 - АВТ, 1 - Вторичного
+        производства).
+    """
+
     __tablename__ = 'unit'
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(Text)
@@ -67,6 +129,14 @@ class __UnitTable(__Base):
 
 
 class __StreamTable(__Base):
+    """Создание объекта класса __StreamTable  с сопутствующими атрибутами.
+
+    Представляет таблицу Stream производственной БД.
+    Атрибуты:
+    id -- int представляющий идентификатор потока.
+    name -- строка представляющая имя потока.
+    """
+
     __tablename__ = 'stream'
     id = Column(Integer, primary_key=True, nullable=False)
     name = Column(Text)
@@ -76,6 +146,17 @@ class __StreamTable(__Base):
 
 
 class __UnitMaterialTable(__Base):
+    """Создание объекта класса __UnitMaterialTable с сопутствующими
+        атрибутами.
+
+    Представляет таблицу Unit_material производственной БД.
+    Атрибуты:
+    unit_id -- int представляющий идентификатор установки.
+    stream_id -- int представляющий идентификатор потока.
+    feed_flag -- int определяющий является ли соответствующий поток
+        выходным (0) или входным (1) для соответствующей установки
+    """
+
     __tablename__ = 'unit_material'
     unit_id = Column(Integer, primary_key=True)
     stream_id = Column(Integer, primary_key=True)
@@ -87,6 +168,15 @@ class __UnitMaterialTable(__Base):
 
 
 class __LoadMaxTable(__Base):
+    """Создание объекта класса __UnitMaterialTable с сопутствующими
+        атрибутами.
+
+    Атрибуты:
+    unit_id -- int представляющий идентификатор установки.
+    value -- int представляющий максимальное значение
+        загрузки установки.
+    """
+
     __tablename__ = 'load_max'
     unit_id = Column(Integer, primary_key=True)
     value = Column(Integer)
@@ -96,6 +186,14 @@ class __LoadMaxTable(__Base):
 
 
 def get_units(session, verbose=False):
+    """Создает объекты классов AVTUnit и RerunningUnit на основе данных
+        производственной БД.
+
+    Аргументы:
+    session -- сессия подключения к производственной БД.
+    verbose -- флаг вывода результатов в консоль.
+    """
+
     new_unit = None
     query = session.query(__UnitTable.name, __UnitTable.type)
     for instance in query:
@@ -108,6 +206,14 @@ def get_units(session, verbose=False):
 
 
 def set_load_max(session, verbose=False):
+    """Обновляет атрибут __load_max существующих объектов класса Unit,
+        AVTUnit, RerunningUnit на основе данных производственной БД.
+
+    Аргументы:
+    session -- сессия подключения к производственной БД.
+    verbose -- флаг вывода результатов в консоль.
+    """
+
     query = session.query(__UnitTable.name, __LoadMaxTable.value)
     query = query.join(__LoadMaxTable,
                        __UnitTable.id == __LoadMaxTable.unit_id)
@@ -120,6 +226,13 @@ def set_load_max(session, verbose=False):
 
 
 def set_related_streams(verbose=False):
+    """Обновляет атрибуты streams_in и streams_out существующих объектов
+     класса Unit, AVTUnit, RerunningUnit.
+
+    Аргументы:
+    verbose -- флаг вывода результатов в консоль.
+    """
+
     for stream in Stream.all_streams.values():
         for unit in stream.dep_units:
             Unit.all_units[unit].streams_out[stream.name] = stream
@@ -131,6 +244,13 @@ def set_related_streams(verbose=False):
 
 
 def get_streams(session, verbose=False):
+    """Создает объекты класса Stream на основе данных производственной БД.
+
+    Аргументы:
+    session -- сессия подключения к производственной БД.
+    verbose -- флаг вывода результатов в консоль.
+    """
+
     query = session.query(__StreamTable.name)
     for instance in query:
         new_stream = Stream(instance.name)
@@ -139,6 +259,14 @@ def get_streams(session, verbose=False):
 
 
 def set_related_units(session, verbose=False):
+    """Обновляет атрибуты dst_units и dep_units существующих объектов
+     класса Stream на основе данных производственной БД.
+
+    Аргументы:
+    session -- сессия подключения к производственной БД.
+    verbose -- флаг вывода результатов в консоль.
+    """
+
     for stream in Stream.all_streams.values():
         query = session.query(__StreamTable.name.label('stream_name'),
                               __UnitTable.name.label('unit_name'),
@@ -159,6 +287,13 @@ def set_related_units(session, verbose=False):
 
 
 def task_3(session):
+    """
+    Решение задачи №3:
+        Создать запрос к БД, возвращающий входные потоки установок
+        в форме: имя_установки, имя_потока_на_входе.
+
+    """
+
     query = session.query(__UnitTable.name.label('unit_name'),
                           __StreamTable.name.label('stream_name'))
     query = query.join(__UnitMaterialTable,
@@ -174,6 +309,12 @@ def task_3(session):
 
 
 def task_4(session):
+    """
+    Решение задачи №4:
+        Вывести в .csv потоки, которые не поступают и не выходят ни с
+        одной установки в формате: id, имя_потока.
+
+    """
 
     def write_to_csv(data, path=os.getcwd(), file='task_4.csv'):
         with open(''.join([path, '\\', file]), "w", newline='') as csv_file:
@@ -191,12 +332,18 @@ def task_4(session):
 
 
 def task_5():
+    """
+    Решение задачи №5:
+        Вывести в .json потоки, которые поступают на несколько установок
+        в формате словаря (ключ - название потока, значение - список установок).
 
-    def write_to_json(data, path=os.getcwd(), file='task_5.json'):
+    """
+
+    def write_to_json(_data, path=os.getcwd(), file='task_5.json'):
         with open(''.join([path, '\\', file]), "w") as json_file:
-            json.dump(data, json_file)
+            json.dump(_data, json_file)
 
-    data = {}
+    data = dict()
     for stream in Stream.all_streams.values():
         if len(stream.dst_units) > 1:
             data[stream.name] = stream.dst_units
@@ -206,6 +353,13 @@ def task_5():
 
 
 def task_6():
+    """
+    Решение задачи №6:
+        Создать excel, в котором каждый лист - название установки.
+        На листе в первой колонке указать входные потоки, во второй
+        выходные (библиотека openpyxl).
+
+    """
 
     def write_to_xlsx(path=os.getcwd(), file='task_6.xlsx'):
         wb = Workbook()
