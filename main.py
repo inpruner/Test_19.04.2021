@@ -4,6 +4,7 @@ from sqlalchemy import Integer, Text
 from sqlalchemy import exists
 from sqlalchemy.orm import declarative_base
 from sqlalchemy.orm import sessionmaker
+from openpyxl import Workbook
 import csv
 import os
 import json
@@ -172,7 +173,7 @@ def task_3(session):
     print('Task 3 - DONE')
 
 
-def task_4(session, verbose=False):
+def task_4(session):
 
     def write_to_csv(data, path=os.getcwd(), file='task_4.csv'):
         with open(''.join([path, '\\', file]), "w", newline='') as csv_file:
@@ -184,32 +185,41 @@ def task_4(session, verbose=False):
     sub_query = ~exists().where(__UnitMaterialTable.stream_id ==
                                 __StreamTable.id)
     query = query.filter(sub_query)
-    write_to_csv(query.all())
-    print()
-    if verbose:
-        print(query.all())
-    print('Task 4 - DONE')
+    file_name = 'task_4.csv'
+    write_to_csv(query.all(), file=file_name)
+    print(f'\nTask 4 - DONE, check {file_name}')
 
 
-def task_5(session, verbose=False):
-    
+def task_5():
+
     def write_to_json(data, path=os.getcwd(), file='task_5.json'):
         with open(''.join([path, '\\', file]), "w") as json_file:
             json.dump(data, json_file)
 
     data = {}
-    print()
     for stream in Stream.all_streams.values():
         if len(stream.dst_units) > 1:
             data[stream.name] = stream.dst_units
-            if verbose:
-                print(stream.name, stream.dst_units)
-    write_to_json(data)
-    print('Task 5 - DONE')
+    file_name = 'task_5.json'
+    write_to_json(data, file=file_name)
+    print(f'\nTask 5 - DONE, check {file_name}')
 
 
-def task_6(session, verbose=False):
-    pass
+def task_6():
+
+    def write_to_xlsx(path=os.getcwd(), file='task_6.xlsx'):
+        wb = Workbook()
+        for unit in Unit.all_units.values():
+            ws = wb.create_sheet(unit.name)
+            for y, streams in enumerate([unit.streams_in, unit.streams_out], 1):
+                for x, stream in enumerate(streams, 1):
+                    ws.cell(row=x, column=y, value=stream)
+        wb.remove(wb['Sheet'])
+        wb.save(''.join([path, '\\', file]))
+
+    file_name = 'task_6.xlsx'
+    write_to_xlsx(file=file_name)
+    print(f'\nTask 6 - DONE, check {file_name}')
 
 
 def main(dialect='sqlite:///', path='db.db'):
@@ -222,9 +232,9 @@ def main(dialect='sqlite:///', path='db.db'):
         set_related_units(session)
         set_related_streams(verbose=True)
         task_3(session)
-        task_4(session, verbose=True)
-        task_5(session, verbose=True)
-        # task_6(session)
+        task_4(session)
+        task_5()
+        task_6()
 
 
 if __name__ == '__main__':

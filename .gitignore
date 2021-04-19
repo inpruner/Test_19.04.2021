@@ -1,3 +1,6 @@
 .idea
 venv
 __pycache__
+task_4.csv
+task_5.json
+task_6.xlsx
